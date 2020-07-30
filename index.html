@@ -1,12 +1,305 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Narrative Visualization Project</title>
+<title>Healthcare policies and their effects on uninsured rate</title>
 </head>
-<body>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<style>       
+    div.tooltip {	
+        position: absolute;			
+        text-align: center;    					
+        padding: 2px;				
+        font: 12px sans-serif;		
+        background: white;	
+        border: 1px;
+        border-radius: 8px;			
+        pointer-events: none;
+        border-style: dotted;			
+    }
+    circle {fill: black; stroke: rgb(110, 17, 17);}
+</style>
+<body onload='init()'>
+<h1>Healthcare policies and their effects on uninsured rate</h1>
+<p>The introduction of Medicare and Medicaid in 1965 as well as Affordable Care Act (ACA) in 2010 were the most important health reforms in driving down uninsurance rates in America. With the current government's repeal of provisions afforded by the ACA, we are seeing a reversal of trends showing increasing uninsured rates.</p>
+<p>
+<button id="1" onclick="b1()">1</button>
+<button id="2" onclick="b2()">2</button>
+<button id="3" onclick="b3()">3</button>
+<button id="4" onclick="b4()">4</button>
+<button id="5" onclick="b5()">Start Over</button>
+</p>
+</p>
+<svg width=1000 height=400>
+</svg>
+<script>
+var xs = d3.scaleLinear().domain([1963,2019]).range([0, 900]);
+var ys = d3.scaleLinear().domain([0,24.3]).range([300,0]);
+var tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
 
-<h1>Scene 1</h1>
-<p>This is a paragraph.</p>
+async function persistentTooTipInit()
+{
+    var persistent_tooltip1 = d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("text")
+        .attr("id","m1")
+        .attr("x", 40)
+        .attr("y", 20)
+        .style("width", "250px")
+        .style("height", "150px")
+        .style('fill', 'green')
+        .style("border-style", "solid")
+        .style("border-radius", "8px")
+        .style("border", "1px")
+        .style("opacity", 0)
+        .text("1. Medicare and Medicaid were incorporated under the Social Security Act and signed by President Johnson in 1965")
+var persistent_tooltip2 = d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("text")
+        .attr("id","m2")
+        .attr("x", 40)
+        .attr("y", 40)
+        .style("width", "250px")
+        .style("height", "150px")
+        .style('fill', "red")
+        .style("border-style", "solid")
+        .style("border-radius", "8px")
+        .style("border", "1px")
+        .style("opacity", 0)
+        .text("2. Without any major health reforms, rates of the uninsured stagnated or increased up to 2010")
+var persistent_tooltip3 = d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("text")
+        .attr("id","m3")
+        .attr("x", 40)
+        .attr("y", 60)
+        .style("width", "250px")
+        .style("height", "150px")
+        .style('fill', 'blue')
+        .style("border-style", "solid")
+        .style("border-radius", "8px")
+        .style("border", "1px")
+        .style("opacity", 0)
+        .text("3. President Barack Obama on March 23 2010 passed the Affordable Care Act with 20-24 million additional people covered.")
+var persistent_tooltip4 = d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("text")
+        .attr("id","m4")
+        .attr("x", 40)
+        .attr("y", 78)
+        .style("width", "250px")
+        .style("height", "150px")
+        .style('fill', 'darkorange')
+        .style("border-style", "solid")
+        .style("border-radius", "8px")
+        .style("border", "1px")
+        .style("opacity", 0)
+        .text("4. Trump administration piece-meal reversal of ACA provisions resulted in rise in uninsured rates not seen since 2010")
+}
 
+async function init()
+{
+    //Sources:
+    //https://obamawhitehouse.archives.gov/sites/whitehouse.gov/files/images/Documents/DataUnderlyingHealthCareReformReport.xlsx
+    //https://www.kff.org/wp-content/uploads/2011/03/5-02-13-history-of-health-reform.pdf
+    document.getElementById("1").disabled = false;
+    document.getElementById("2").disabled = true;
+    document.getElementById("3").disabled = true;
+    document.getElementById("4").disabled = true;
+    
+    persistentTooTipInit();
+    
+    const data = await d3.csv('https://raw.githubusercontent.com/amarube/narrativevis/master/UninsuredRate.csv');
+    
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .call(d3.axisLeft(ys).ticks(15).tickFormat(d3.format("~s")))
+
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(20,240)")
+    .append("text")
+        .attr("transform", "rotate(-90)")
+        .text("Uninsured Rate");
+
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,350)")
+        .call(d3.axisBottom(xs).ticks(15).tickFormat(d3.format("d")))
+    
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(500,380)")
+    .append("text")
+        .text("Year");
+
+    d3.select("svg")
+        .append("g")
+            .attr("transform", "translate(50,50)")
+        .selectAll("circle")	
+        .data(data)			
+        .enter()
+        .append("circle")								
+            .attr("cx", function(d){return xs(d.Year)})		 
+            .attr("cy", function(d){return ys(d.UninsuredRate)})
+            .attr("r", 3)	
+            .on("mouseover", function(d) {	
+                tooltip.transition()		
+                    .duration(200)
+                    .style("opacity", 0.9);
+                var message = "";
+                var stats = "";
+                if (d.Message)
+                {
+                    message = "<br/> Key Events: " + d.Message
+                }
+                else
+                {
+                    message = "<br/> Key Events: None";
+                }
+                if (d.Children)
+                {
+                    stats = "<br/>" + "Children < 19 uninsured rate: " + d.Children + "<br/>" + "Adults (26-64) uninsured rate: " + d.Adults
+                }
+                else
+                {
+                    stats = "<br/>" + "Children < 19 uninsured rate: " + "Not Available" + "<br/>" + "Adults (26-64) uninsured rate: " + "Not Available"
+                }
+
+                tooltip.html("Year:" + d.Year + "<br/>"  + "UninsuredRate: "+ d.UninsuredRate+ stats + message)	
+                .style("left", d3.event.pageX + "px")		
+                .style("top", d3.event.pageY + "px")
+                .style("width", "250px")
+                .style("height", "150px")
+                })			
+            .on("mouseout", function(d) {
+                tooltip.transition()		
+                    .duration(400)
+                    .style("opacity", 0);	
+            });
+}
+
+function clearSvg()
+{
+    var svg = d3.select("svg");
+    svg.selectAll("*").remove();
+}
+async function b1()
+{
+    const d = await d3.csv('https://raw.githubusercontent.com/amarube/narrativevis/master/UninsuredRate.csv');
+    const data = d.filter(item => item.Year <= 1974);
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "green")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+            .x(function(d,i){return xs(d.Year)})
+            .y(function(d,i){return ys(d.UninsuredRate)})
+            .curve(d3.curveMonotoneX)
+        )
+    
+    d3.select("#m1")
+    .transition()
+    .delay(500)
+    .style("opacity", 1)
+
+    document.getElementById("1").disabled = true;
+    document.getElementById("2").disabled = false;
+}
+async function b2()
+{
+    const d = await d3.csv('https://raw.githubusercontent.com/amarube/narrativevis/master/UninsuredRate.csv');
+    const data = d.filter(item => item.Year >= 1974 && item.Year <= 2010);
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+            .x(function(d,i){return xs(d.Year)})
+            .y(function(d,i){return ys(d.UninsuredRate)})
+            .curve(d3.curveMonotoneX)
+        )
+    
+    d3.select("#m2")
+    .transition()
+    .delay(500)
+    .style("opacity", 1)
+
+    document.getElementById("2").disabled = true;
+    document.getElementById("3").disabled = false;
+}
+
+async function b3()
+{
+    const d = await d3.csv('https://raw.githubusercontent.com/amarube/narrativevis/master/UninsuredRate.csv');
+    
+    const data = d.filter(item => item.Year >= 2010 && item.Year <=2017);
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "blue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+            .x(function(d,i){return xs(d.Year)})
+            .y(function(d,i){return ys(d.UninsuredRate)})
+            .curve(d3.curveMonotoneX)
+        )
+    d3.select("#m3")
+    .transition()
+    .delay(500)
+    .style("opacity", 1)
+    document.getElementById("3").disabled = true;
+    document.getElementById("4").disabled = false;
+}
+
+async function b4()
+{
+    const d = await d3.csv('https://raw.githubusercontent.com/amarube/narrativevis/master/UninsuredRate.csv');
+    
+    const data = d.filter(item => item.Year >= 2017);
+    d3.select("svg")
+    .append("g")
+        .attr("transform", "translate(50,50)")
+    .append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "darkorange")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+            .x(function(d,i){return xs(d.Year)})
+            .y(function(d,i){return ys(d.UninsuredRate)})
+            .curve(d3.curveMonotoneX)
+        )
+    
+    d3.select("#m4")
+    .transition()
+    .delay(500)
+    .style("opacity", 1)
+
+    document.getElementById("4").disabled = true;
+    document.getElementById("5").disabled = false;
+}
+
+async function b5()
+{
+    clearSvg();
+    init();
+}
+</script>
 </body>
 </html>
